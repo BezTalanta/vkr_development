@@ -1,11 +1,10 @@
 from django.shortcuts import render, redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import FormView
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import get_user_model
 
-from .forms import UserCreationForm, UserLoginForm
+from .forms import UserLoginForm, UserRegisterForm
 
 
 class LoginView(View):
@@ -30,22 +29,23 @@ class LoginView(View):
         })
 
 
-class RegisterFormView(FormView):
-    form_class = UserCreationForm
-    template_name = 'account/signup.html'
-
-
 class RegisterView(View):
     '''Signup low-level CBV'''
     def get(self, request, *args, **kwargs):
-        return render(request, 'account/register.html')
+        return render(request, 'account/signup.html', {
+            'form': UserRegisterForm,
+        })
 
     def post(self, request, *args, **kwargs):
-        created_user = get_user_model().objects.create_user(
-            username=request.POST['username'],
-            password=request.POST['password'],
-            first_name=request.POST['first_name'],
-            last_name=request.POST['last_name']
-        )
-        login(request, created_user)
-        return redirect(reverse('home'))
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            get_user_model().objects.create_user(
+                email=form.cleaned_data['email'],
+                password=form.cleaned_data['password1'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+            )
+            return redirect(reverse('home'))
+        return render(request, 'account/signup.html', {
+            'form': form,
+        })

@@ -61,3 +61,26 @@ class UserLoginForm(forms.Form):
             self.errors['email'] = ['Пользователь не найден',]
             return False
         return True
+
+
+class UserRegisterForm(forms.Form):
+    '''A form for registration new users because of form above doesn't save'''
+    email = forms.EmailField(label='Email почта')
+    first_name = forms.CharField(label='Имя')
+    last_name = forms.CharField(label='Фамилия')
+    password1 = forms.CharField(label='Пароль',
+                               widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Подтверждение пароля',
+                               widget=forms.PasswordInput)
+
+    def is_valid(self):
+        valid = super().is_valid()
+        if not valid:
+            return False
+        if self.cleaned_data['password1'] != self.cleaned_data['password2']:
+            self.errors['password1'] = ['Пароли не совпадают',]
+            return False
+        if User.objects.filter(email=self.cleaned_data['email']).exists():
+            self.errors['email'] = ['Пользователь уже существует',]
+            return False
+        return True
